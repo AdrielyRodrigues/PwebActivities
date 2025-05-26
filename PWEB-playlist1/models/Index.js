@@ -1,4 +1,4 @@
-import sequelize from './../config/database.js';
+import sequelize from '../config/database.js';
 import UsuarioModel from './Usuario.js';
 import FilmeModel from './Filme.js';
 import CanalModel from './Canal.js';

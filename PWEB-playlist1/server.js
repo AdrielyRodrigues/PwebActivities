@@ -7,13 +7,16 @@ import { sequelize, Usuario, Filme, Canal, CanalFilme, Playlist, Comentario } fr
     console.log('✅ Conexão com o banco de dados estabelecida com sucesso.');
 
     await sequelize.sync({ alter: true }); // Isso agora criará TODAS as tabelas com base em todos os modelos importados e relacionados
+    console.log('✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅');
     console.log('✅ Tabelas sincronizadas com sucesso.');
+    console.log('✅ >>>>>>>>>>>>>>>>SUCESSO<<<<<<<<<<<<<<<<<<');
+    console.log('✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅');
 
     // Exemplo de uso:
     const novoUsuario = await Usuario.create({
-      login: 'thiago2.oliveira',
-      nome: 'Thiago2 Oliveira',
-      email: 'thiago2soliveira@ifal.edu.br'
+      login: 'thiago3.oliveira',
+      nome: 'Thiago3 Oliveira',
+      email: 'thiago3soliveira@ifal.edu.br'
     });
 
     const usuarios = await Usuario.findAll();
