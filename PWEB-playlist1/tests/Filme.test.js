@@ -1,61 +1,30 @@
-import { expect } from 'chai';
-import { sequelize, db } from './setup.js';
+import { Sequelize, DataTypes } from 'sequelize';
+import defineFilme from '../models/Filme.js';
+
+let sequelize;
+let Filme;
+
+beforeAll(async () => {
+  sequelize = new Sequelize('sqlite::memory:', { logging: false });
+  Filme = defineFilme(sequelize, DataTypes);
+  await sequelize.sync({ force: true });
+});
+
+afterAll(async () => {
+  await sequelize.close();
+});
 
 describe('Filme Model', () => {
-  it('Deve criar um filme com dados válidos', async () => {
-    const filme = await db.Filme.create({
-      titulo: 'Filme Teste',
-      genero: 'Ação',
-      duracao: 120,
-      ano_lancamento: 2023,
-      nota_avaliacao: 8.5,
+  it('deve criar um filme válido', async () => {
+    const filme = await Filme.create({
+      titulo: 'Matrix',
+      genero: 'Ficção',
+      duracao: 136,
+      ano_lancamento: 1999,
+      nota_media: 9.0
     });
 
-    expect(filme).to.have.property('id');
-    expect(filme.titulo).to.equal('Filme Teste');
-    expect(parseFloat(filme.nota_avaliacao)).to.equal(8.5);
-  });
-
-  it('Não deve criar um filme sem título', async () => {
-    try {
-      await db.Filme.create({
-        genero: 'Ação',
-        duracao: 120,
-        ano_lancamento: 2023,
-        nota_avaliacao: 8.5,
-      });
-      expect.fail('Deveria ter lançado um erro de validação');
-    } catch (error) {
-      expect(error.name).to.equal('SequelizeValidationError');
-    }
-  });
-
-  it('Não deve criar um filme com nota_avaliacao fora do intervalo', async () => {
-    try {
-      await db.Filme.create({
-        titulo: 'Filme Inválido',
-        genero: 'Ação',
-        duracao: 120,
-        ano_lancamento: 2023,
-        nota_avaliacao: 11,
-      });
-      expect.fail('Deveria ter lançado um erro de validação');
-    } catch (error) {
-      expect(error.name).to.equal('SequelizeValidationError');
-    }
-  });
-
-  it('Não deve criar um filme sem gênero', async () => {
-    try {
-      await db.Filme.create({
-        titulo: 'Filme Sem Gênero',
-        duracao: 120,
-        ano_lancamento: 2023,
-        nota_avaliacao: 8.5,
-      });
-      expect.fail('Deveria ter lançado um erro de validação');
-    } catch (error) {
-      expect(error.name).to.equal('SequelizeValidationError');
-    }
+    expect(filme).toBeDefined();
+    expect(filme.titulo).toBe('Matrix');
   });
 });

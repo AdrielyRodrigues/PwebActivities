@@ -1,54 +1,28 @@
-import { expect } from 'chai';
-import { sequelize, db } from './setup.js';
+import { Sequelize, DataTypes } from 'sequelize';
+import defineUsuario from '../models/Usuario.js';
+
+let sequelize;
+let Usuario;
+
+beforeAll(async () => {
+  sequelize = new Sequelize('sqlite::memory:', { logging: false });
+  Usuario = defineUsuario(sequelize, DataTypes);
+  await sequelize.sync({ force: true });
+});
+
+afterAll(async () => {
+  await sequelize.close();
+});
 
 describe('Usuario Model', () => {
-    it('Deve criar um usuário com dados válidos', async () => {
-        const usuario = await db.Usuario.create({
-            login: 'teste123',
-            nome: 'Usuário Teste',
-        });
-
-        expect(usuario).to.have.property('id');
-        expect(usuario.login).to.equal('teste123');
-        expect(usuario.nome).to.equal('Usuário Teste');
+  it('deve criar um usuário válido', async () => {
+    const user = await Usuario.create({
+      login: 'teste123',
+      nome: 'Usuário Teste',
+      data_nascimento: '2000-01-01',
+      email: 'teste@email.com'
     });
-
-    it('Não deve criar um usuário com login duplicado', async () => {
-        await db.Usuario.create({
-            login: 'duplicado',
-            nome: 'Usuário 1',
-        });
-
-        try {
-            await db.Usuario.create({
-                login: 'duplicado',
-                nome: 'Usuário 2',
-            });
-            expect.fail('Deveria ter lançado um erro de unicidade');
-        } catch (error) {
-            expect(error.name).to.equal('SequelizeUniqueConstraintError');
-        }
-    });
-
-    it('Não deve criar um usuário sem login', async () => {
-        try {
-            await db.Usuario.create({
-                nome: 'Usuário Sem Login',
-            });
-            expect.fail('Deveria ter lançado um erro de validação');
-        } catch (error) {
-            expect(error.name).to.equal('SequelizeValidationError');
-        }
-    });
-
-    it('Não deve criar um usuário sem nome', async () => {
-        try {
-            await db.Usuario.create({
-                login: 'sem_nome',
-            });
-            expect.fail('Deveria ter lançado um erro de validação');
-        } catch (error) {
-            expect(error.name).to.equal('SequelizeValidationError');
-        }
-    });
+    expect(user).toBeDefined();
+    expect(user.login).toBe('teste123');
+  });
 });

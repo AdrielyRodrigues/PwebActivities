@@ -1,3 +1,4 @@
+
 import { DataTypes } from 'sequelize';
 
 export default (sequelize) => {
@@ -24,7 +25,7 @@ export default (sequelize) => {
     }
   }, {
     tableName: 'usuarios',
-    timestamps: false,
+    timestamps: true,
   });
 
   return Usuario;

@@ -1,9 +1,10 @@
-import sequelize from '../config/database.js';
+import sequelize from './../config/database.js';
 import UsuarioModel from './Usuario.js';
 import FilmeModel from './Filme.js';
 import CanalModel from './Canal.js';
 import CanalFilmeModel from './CanalFilme.js';
 import PlaylistModel from './Playlist.js';
+import PlaylistFilmeModel from './PlaylistFilme.js';
 import ComentarioModel from './Comentario.js';
 import MensalidadeModel from './Mensalidade.js';
 
@@ -13,6 +14,7 @@ const Filme = FilmeModel(sequelize);
 const Canal = CanalModel(sequelize);
 const CanalFilme = CanalFilmeModel(sequelize);
 const Playlist = PlaylistModel(sequelize);
+const PlaylistFilme = PlaylistFilmeModel(sequelize);
 const Comentario = ComentarioModel(sequelize);
 
 // RELACIONAMENTOS
@@ -28,12 +30,6 @@ Filme.belongsToMany(Canal, {
 Usuario.hasMany(Playlist, { foreignKey: 'id_usuario' });
 Playlist.belongsTo(Usuario, { foreignKey: 'id_usuario' });
 
-Canal.hasMany(Playlist, { foreignKey: 'id_canal' });
-Playlist.belongsTo(Canal, { foreignKey: 'id_canal' });
-
-Filme.hasMany(Playlist, { foreignKey: 'id_filme' });
-Playlist.belongsTo(Filme, { foreignKey: 'id_filme' });
-
 Usuario.hasMany(Comentario, { foreignKey: 'id_usuario' });
 Comentario.belongsTo(Usuario, { foreignKey: 'id_usuario' });
 
@@ -43,6 +39,29 @@ Comentario.belongsTo(Filme, { foreignKey: 'id_filme' });
 Usuario.hasMany(Mensalidade, { foreignKey: 'id_usuario' });
 Mensalidade.belongsTo(Usuario, { foreignKey: 'id_usuario' });
 
+
+Playlist.belongsToMany(Filme, {
+  through: PlaylistFilme,
+  foreignKey: 'id_playlist',
+  otherKey: 'id_filme',
+  as: 'filmes',
+});
+
+Filme.belongsToMany(Playlist, {
+  through: PlaylistFilme,
+  foreignKey: 'id_filme',
+  otherKey: 'id_playlist',
+  as: 'playlists',
+});
+
+
+Playlist.hasMany(PlaylistFilme, { foreignKey: 'id_playlist' });
+PlaylistFilme.belongsTo(Playlist, { foreignKey: 'id_playlist' });
+
+Filme.hasMany(PlaylistFilme, { foreignKey: 'id_filme' });
+PlaylistFilme.belongsTo(Filme, { foreignKey: 'id_filme' });
+
+
 export {
   sequelize,
   Usuario,
@@ -51,5 +70,6 @@ export {
   CanalFilme,
   Playlist,
   Comentario,
-  Mensalidade
+  Mensalidade,
+  PlaylistFilme
 };

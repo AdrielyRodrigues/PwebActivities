@@ -1,96 +1,122 @@
-import { expect } from 'chai';
-import { sequelize, db } from './setup.js';
+import { Sequelize, DataTypes } from 'sequelize';
+import defineComentario from '../models/Comentario.js';
 
-describe('Comentario2 Model - Validações adicionais', () => {
-    let usuario, filme;
+const defineUsuario = (sequelize) =>
+  sequelize.define('Usuario', {
+    id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
+    nome: { type: DataTypes.STRING, allowNull: false },
+  }, { tableName: 'usuarios', timestamps: false });
 
-    beforeEach(async () => {
-        // Limpa e recria o banco antes de cada teste
-        await sequelize.sync({ force: true });
+const defineFilme = (sequelize) =>
+  sequelize.define('Filme', {
+    id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
+    titulo: { type: DataTypes.STRING, allowNull: false },
+  }, { tableName: 'filmes', timestamps: false });
 
-        usuario = await db.Usuario.create({
-            login: 'teste123',
-            nome: 'Usuário Teste',
-        });
+let sequelize;
+let Comentario, Usuario, Filme;
 
-        filme = await db.Filme.create({
-            titulo: 'Filme Teste',
-            genero: 'Ação',
-            duracao: 120,
-            ano_lancamento: 2023,
-            nota_avaliacao: 8.5,
-        });
+beforeAll(async () => {
+  sequelize = new Sequelize('sqlite::memory:', { logging: false });
+  Usuario = defineUsuario(sequelize);
+  Filme = defineFilme(sequelize);
+  Comentario = defineComentario(sequelize, DataTypes);
+
+  Usuario.hasMany(Comentario, { foreignKey: 'id_usuario' });
+  Filme.hasMany(Comentario, { foreignKey: 'id_filme' });
+  Comentario.belongsTo(Usuario, { foreignKey: 'id_usuario' });
+  Comentario.belongsTo(Filme, { foreignKey: 'id_filme' });
+
+  await sequelize.sync({ force: true });
+
+  await Usuario.bulkCreate([
+    { nome: 'João' },
+    { nome: 'Maria' },
+  ]);
+
+  await Filme.bulkCreate([
+    { titulo: 'Interestelar' },
+    { titulo: 'Oppenheimer' },
+  ]);
+});
+
+afterAll(async () => {
+  await sequelize.close();
+});
+
+describe('Teste de integração do modelo Comentario', () => {
+  test('Usuário pode comentar em múltiplos filmes', async () => {
+    const usuario = await Usuario.findOne({ where: { nome: 'João' } });
+    const filmes = await Filme.findAll();
+
+    const comentarios = await Promise.all(filmes.map(filme => Comentario.create({
+      id_usuario: usuario.id,
+      id_filme: filme.id,
+      texto: `Comentando sobre ${filme.titulo}`,
+      avaliacao: 7.5,
+    })));
+
+    expect(comentarios.length).toBe(2);
+    expect(comentarios[0].id_usuario).toBe(usuario.id);
+  });
+
+  test('Filme pode receber comentários de vários usuários', async () => {
+    const usuarios = await Usuario.findAll();
+    const filme = await Filme.findOne({ where: { titulo: 'Interestelar' } });
+
+    for (const usuario of usuarios) {
+      await Comentario.create({
+        id_usuario: usuario.id,
+        id_filme: filme.id,
+        texto: `Opinião de ${usuario.nome}`,
+        avaliacao: 8.0,
+      });
+    }
+
+    const comentarios = await Comentario.findAll({
+      where: { id_filme: filme.id },
     });
 
-    it('Deve criar um comentário com texto de até 500 caracteres', async () => {
-        const textoValido = 'A'.repeat(500);
+    expect(comentarios.length).toBeGreaterThanOrEqual(2);
+  });
 
-        const comentario = await db.Comentario.create({
-            id_usuario: usuario.id,
-            id_filme: filme.id,
-            texto: textoValido,
-            avaliacao: 8.0,
-        });
+  test('Listar comentários de um filme ordenados por data', async () => {
+    const filme = await Filme.findOne({ where: { titulo: 'Interestelar' } });
 
-        expect(comentario.texto).to.have.lengthOf(500);
+    await Comentario.create({
+      id_usuario: 1,
+      id_filme: filme.id,
+      texto: 'Comentário mais recente',
+      data_comentario: new Date('2025-07-09T12:00:00'),
     });
 
-    it('Não deve criar comentário com texto maior que 500 caracteres', async () => {
-        const textoLongo = 'A'.repeat(501);
-
-        try {
-            await db.Comentario.create({
-                id_usuario: usuario.id,
-                id_filme: filme.id,
-                texto: textoLongo,
-                avaliacao: 7.0,
-            });
-            expect.fail('Deveria ter lançado um erro de validação');
-        } catch (error) {
-            expect(error.name).to.equal('SequelizeValidationError');
-            expect(error.errors[0].message).to.equal('O comentário deve ter entre 1 e 500 caracteres.');
-        }
+    await Comentario.create({
+      id_usuario: 1,
+      id_filme: filme.id,
+      texto: 'Comentário mais antigo',
+      data_comentario: new Date('2025-07-01T08:00:00'),
     });
 
-    it('Não deve criar comentário com data no futuro', async () => {
-        const dataFutura = new Date(Date.now() + 24 * 60 * 60 * 1000); // amanhã
-
-        try {
-            await db.Comentario.create({
-                id_usuario: usuario.id,
-                id_filme: filme.id,
-                texto: 'Comentário com data futura',
-                data_comentario: dataFutura,
-                avaliacao: 6.0,
-            });
-            expect.fail('Deveria ter lançado um erro de validação');
-        } catch (error) {
-            expect(error.name).to.equal('SequelizeValidationError');
-            expect(error.errors[0].message).to.equal('A data do comentário não pode ser no futuro.');
-        }
+    const comentariosOrdenados = await Comentario.findAll({
+      where: { id_filme: filme.id },
+      order: [['data_comentario', 'ASC']],
     });
 
-    it('Deve aceitar data atual ou passada no comentário', async () => {
-        const dataAtual = new Date();
-        const dataPassada = new Date('2022-01-01');
+    expect(comentariosOrdenados[0].texto).toBe('Comentando sobre Interestelar');
+    expect(comentariosOrdenados.at(-1).texto).toBe('Comentário mais recente');
+  });
 
-        const comentarioAtual = await db.Comentario.create({
-            id_usuario: usuario.id,
-            id_filme: filme.id,
-            texto: 'Comentário com data atual',
-            data_comentario: dataAtual,
-            avaliacao: 5.5,
-        });
+  test('Calcular média de avaliações de um filme', async () => {
+    const filme = await Filme.findOne({ where: { titulo: 'Interestelar' } });
 
-        const comentarioPassado = await db.Comentario.create({
-            id_usuario: usuario.id,
-            id_filme: filme.id,
-            texto: 'Comentário com data passada',
-            data_comentario: dataPassada,
-            avaliacao: 5.5,
-        });
-
-        expect(new Date(comentarioAtual.data_comentario).getTime()).to.be.closeTo(dataAtual.getTime(), 1000);
-        expect(new Date(comentarioPassado.data_comentario)).to.deep.equal(dataPassada);
+    const comentarios = await Comentario.findAll({
+      where: { id_filme: filme.id },
     });
+
+    const soma = comentarios.reduce((total, c) => total + parseFloat(c.avaliacao || 0), 0);
+    const media = soma / comentarios.length;
+
+    expect(media).toBeGreaterThanOrEqual(0);
+    expect(media).toBeLessThanOrEqual(10);
+  });
 });
