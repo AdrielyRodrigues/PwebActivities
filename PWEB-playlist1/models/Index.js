@@ -1,75 +1,55 @@
-import sequelize from './../config/database.js';
-import UsuarioModel from './Usuario.js';
-import FilmeModel from './Filme.js';
-import CanalModel from './Canal.js';
-import CanalFilmeModel from './CanalFilme.js';
-import PlaylistModel from './Playlist.js';
-import PlaylistFilmeModel from './PlaylistFilme.js';
-import ComentarioModel from './Comentario.js';
-import MensalidadeModel from './Mensalidade.js';
+const { Sequelize } = require('sequelize');
+const dotenv = require('dotenv');
+dotenv.config();
 
-const Mensalidade = MensalidadeModel(sequelize);
-const Usuario = UsuarioModel(sequelize);
-const Filme = FilmeModel(sequelize);
-const Canal = CanalModel(sequelize);
-const CanalFilme = CanalFilmeModel(sequelize);
-const Playlist = PlaylistModel(sequelize);
-const PlaylistFilme = PlaylistFilmeModel(sequelize);
-const Comentario = ComentarioModel(sequelize);
+const sequelize = new Sequelize(
+  process.env.DB_NAME,
+  process.env.DB_USER,
+  process.env.DB_PASSWORD,
+  {
+    host: process.env.DB_HOST,
+    dialect: 'postgres',
+    port: process.env.DB_PORT,
+    logging: false,
+  }
+);
 
-// RELACIONAMENTOS
-Canal.belongsToMany(Filme, {
-  through: CanalFilme,
-  foreignKey: 'id_canal',
-});
-Filme.belongsToMany(Canal, {
-  through: CanalFilme,
-  foreignKey: 'id_filme',
-});
+// Importar modelos
+const { Musica } = require('./Musica');
+const { Playlist } = require('./Playlist');
+const { PlaylistMusica } = require('./PlaylistMusica');
+const { Usuario } = require('./Usuario');
+const { Avaliacao } = require('./Avaliacao');
+const Canal = require('./Canal');
 
-Usuario.hasMany(Playlist, { foreignKey: 'id_usuario' });
-Playlist.belongsTo(Usuario, { foreignKey: 'id_usuario' });
+// Criar modelo Canal
+const canal = Canal(sequelize);
 
-Usuario.hasMany(Comentario, { foreignKey: 'id_usuario' });
-Comentario.belongsTo(Usuario, { foreignKey: 'id_usuario' });
-
-Filme.hasMany(Comentario, { foreignKey: 'id_filme' });
-Comentario.belongsTo(Filme, { foreignKey: 'id_filme' });
-
-Usuario.hasMany(Mensalidade, { foreignKey: 'id_usuario' });
-Mensalidade.belongsTo(Usuario, { foreignKey: 'id_usuario' });
+// Relacionamentos
+Usuario.hasMany(Avaliacao, { foreignKey: 'usuarioId' });
+Musica.hasMany(Avaliacao, { foreignKey: 'musicaId' });
+Avaliacao.belongsTo(Usuario, { foreignKey: 'usuarioId' });
+Avaliacao.belongsTo(Musica, { foreignKey: 'musicaId' });
 
 
-Playlist.belongsToMany(Filme, {
-  through: PlaylistFilme,
-  foreignKey: 'id_playlist',
-  otherKey: 'id_filme',
-  as: 'filmes',
+Playlist.belongsToMany(Musica, {
+  through: PlaylistMusica,
+  foreignKey: 'playlistId',
+  as: 'musicas',
 });
 
-Filme.belongsToMany(Playlist, {
-  through: PlaylistFilme,
-  foreignKey: 'id_filme',
-  otherKey: 'id_playlist',
+Musica.belongsToMany(Playlist, {
+  through: PlaylistMusica,
+  foreignKey: 'musicaId',
   as: 'playlists',
 });
 
-
-Playlist.hasMany(PlaylistFilme, { foreignKey: 'id_playlist' });
-PlaylistFilme.belongsTo(Playlist, { foreignKey: 'id_playlist' });
-
-Filme.hasMany(PlaylistFilme, { foreignKey: 'id_filme' });
-PlaylistFilme.belongsTo(Filme, { foreignKey: 'id_filme' });
-
-
-export {
+module.exports = {
   sequelize,
-  Usuario,
-  Filme,
-  Canal,
-  CanalFilme,
+  Musica,
   Playlist,
-  Comentario,
-  Mensalidade,
-  PlaylistFilme
+  PlaylistMusica,
+  Usuario,
+  Avaliacao,
+  Canal: canal,
 };

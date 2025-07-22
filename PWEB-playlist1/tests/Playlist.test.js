@@ -1,18 +1,7 @@
-import { Sequelize, DataTypes } from 'sequelize';
-import definePlaylist from '../models/Playlist.js';
-import defineUsuario from '../models/Usuario.js';
-
-let sequelize;
-let Playlist, Usuario;
+import { sequelize, Playlist } from  '../models/Index.js';
+const { expect } = ('@jest/globals');
 
 beforeAll(async () => {
-  sequelize = new Sequelize('sqlite::memory:', { logging: false });
-  Usuario = defineUsuario(sequelize, DataTypes);
-  Playlist = definePlaylist(sequelize, DataTypes);
-
-  Usuario.hasMany(Playlist, { foreignKey: 'id_usuario' });
-  Playlist.belongsTo(Usuario, { foreignKey: 'id_usuario' });
-
   await sequelize.sync({ force: true });
 });
 
@@ -20,11 +9,19 @@ afterAll(async () => {
   await sequelize.close();
 });
 
-describe('Playlist Model', () => {
-  it('deve criar uma playlist válida com usuário', async () => {
-    const user = await Usuario.create({ login: 'playlistuser', nome: 'Playlist Owner', email: 'p@teste.com' });
-    const playlist = await Playlist.create({ nome: 'Minha Playlist', id_usuario: user.id });
+describe('Modelo Playlist', () => {
+  test('deve criar uma playlist com nome', async () => {
+    const playlist = await Playlist.create({
+      nome: 'Minhas Favoritas',
+    });
+
     expect(playlist).toBeDefined();
-    expect(playlist.nome).toBe('Minha Playlist');
+    expect(playlist.nome).toBe('Minhas Favoritas');
+  });
+
+  test('deve lançar erro se o nome for vazio', async () => {
+    await expect(
+      Playlist.create({})
+    ).rejects.toThrow('notNull Violation');
   });
 });

@@ -1,6 +1,8 @@
-import { DataTypes } from 'sequelize';
-export default (sequelize) => {
-  const Canal = sequelize.define('Canal', {
+const { DataTypes } = require('sequelize');
+
+
+const Canal = (sequelize) => {
+  return sequelize.define('Canal', {
     id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
     nome: { type: DataTypes.STRING(100), allowNull: false },
     data_criacao: { type: DataTypes.DATE, allowNull: false },
@@ -9,5 +11,6 @@ export default (sequelize) => {
     tableName: 'canais',
     timestamps: false,
   });
-  return Canal;
 };
+
+module.exports = Canal;

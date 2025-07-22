@@ -1,12 +1,7 @@
-import { Sequelize, DataTypes } from 'sequelize';
-import defineUsuario from '../models/Usuario.js';
-
-let sequelize;
-let Usuario;
+const { sequelize, Usuario } = require('../models/Index');
+const { expect } = ('@jest/globals');
 
 beforeAll(async () => {
-  sequelize = new Sequelize('sqlite::memory:', { logging: false });
-  Usuario = defineUsuario(sequelize, DataTypes);
   await sequelize.sync({ force: true });
 });
 
@@ -14,15 +9,23 @@ afterAll(async () => {
   await sequelize.close();
 });
 
-describe('Usuario Model', () => {
-  it('deve criar um usuário válido', async () => {
-    const user = await Usuario.create({
-      login: 'teste123',
-      nome: 'Usuário Teste',
-      data_nascimento: '2000-01-01',
-      email: 'teste@email.com'
+describe('Modelo Usuario', () => {
+  test('deve criar um usuário com sucesso', async () => {
+    const usuario = await Usuario.create({
+      login: 'joao123',
+      nome: 'João da Silva',
     });
-    expect(user).toBeDefined();
-    expect(user.login).toBe('teste123');
+
+    expect(usuario).toBeDefined();
+    expect(usuario.login).toBe('joao123');
+  });
+
+  test('não deve permitir login duplicado', async () => {
+    await Usuario.create({ login: 'joao123', nome: 'João da Silva' });
+
+    await expect(Usuario.create({
+      login: 'joao123',
+      nome: 'Outro João',
+    })).rejects.toThrow();
   });
 });

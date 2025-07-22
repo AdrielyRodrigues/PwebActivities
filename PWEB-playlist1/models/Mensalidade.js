@@ -1,4 +1,6 @@
 import { DataTypes } from 'sequelize';
+
+
 export default (sequelize) => {
   const Mensalidade = sequelize.define('Mensalidade', {
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
@@ -33,3 +35,6 @@ export default (sequelize) => {
   });
   return Mensalidade;
 };
+
+import { Mensalidade } from './Mensalidade.js';
+export { Mensalidade };

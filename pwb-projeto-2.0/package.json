@@ -1,0 +1,23 @@
+{
+  "name": "pweb",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "cross-env NODE_ENV=test mocha tests/**/*.test.js --exit"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "pg": "^8.14.1",
+    "sequelize": "^6.37.7"
+  },
+  "devDependencies": {
+    "chai": "^5.2.1",
+    "cross-env": "^7.0.3",
+    "mocha": "^11.7.1"
+  }
+}

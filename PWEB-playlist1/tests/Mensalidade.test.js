@@ -1,19 +1,9 @@
-import { Sequelize, DataTypes } from 'sequelize';
-import defineMensalidade from '../models/Mensalidade.js';
-import defineUsuario from '../models/Usuario.js';
-
-let sequelize;
-let Mensalidade, Usuario;
+const { sequelize } = require('../models/Index');
+const { Mensalidade } = require('../models/Mensalidade');
+const { Usuario } = require('../models/Index');
+const { expect } = ('@jest/globals');
 
 beforeAll(async () => {
-  sequelize = new Sequelize('sqlite::memory:', { logging: false });
-
-  Usuario = defineUsuario(sequelize, DataTypes);
-  Mensalidade = defineMensalidade(sequelize, DataTypes);
-
-  Usuario.hasMany(Mensalidade, { foreignKey: 'id_usuario' });
-  Mensalidade.belongsTo(Usuario, { foreignKey: 'id_usuario' });
-
   await sequelize.sync({ force: true });
 });
 
@@ -21,18 +11,20 @@ afterAll(async () => {
   await sequelize.close();
 });
 
-describe('Mensalidade Model', () => {
-  it('deve criar uma mensalidade válida', async () => {
-    const user = await Usuario.create({ login: 'pagador', nome: 'Pagador', email: 'pagador@teste.com' });
+describe('Modelo Mensalidade', () => {
+  test('deve criar uma mensalidade válida', async () => {
+    const usuario = await Usuario.create({
+      login: 'mensal_user',
+      nome: 'Usuário Mensal',
+    });
 
     const mensalidade = await Mensalidade.create({
-      id_usuario: user.id,
-      valor: 29.90,
-      ano_mes: '2025-07',
-      status: 'pago'
+      valor: 49.9,
+      vencimento: '2025-07-20',
+      usuarioId: usuario.id,
     });
 
     expect(mensalidade).toBeDefined();
-    expect(mensalidade.status).toBe('pago');
+    expect(mensalidade.valor).toBe(49.9);
   });
 });
